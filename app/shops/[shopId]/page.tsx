@@ -51,14 +51,14 @@ export default function ShopPage() {
   }, [shopId]);
 
   const handleAddToCart = (product: any) => {
-  addToCart({
-    id: product.id,
-    name: product.name,
-    price: product.price,
-    priceText: product.price_text,
-    image: product.image
-  });
-};
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      priceText: product.price_text,
+      image: product.image
+    });
+  };
 
   if (loading) {
     return (
@@ -86,14 +86,31 @@ export default function ShopPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      {/* Do'kon Banneri */}
-      <div className="bg-blue-600 text-white py-16">
-        <div className="container mx-auto px-6">
+      {/* Do'kon Banneri - QORA QATLAM OLIB TASHLANDI */}
+      <div 
+        className={`${shop.banner_url ? '' : 'bg-blue-600'} text-white py-16`}
+        style={{
+          backgroundImage: shop.banner_url ? `url(${shop.banner_url})` : 'none',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          position: 'relative'
+        }}
+      >
+        <div className="container mx-auto px-6 relative z-10">
           <div className="flex items-center gap-4 mb-4">
-            <span className="text-5xl">{shop.logo}</span>
-            <h1 className="text-4xl font-bold">{shop.name}</h1>
+            {/* Logo - rasm yoki emoji */}
+            {shop.logo_url ? (
+              <img 
+                src={shop.logo_url} 
+                alt={shop.name}
+                className="w-16 h-16 rounded-lg object-cover bg-white"
+              />
+            ) : (
+              <span className="text-5xl">🏪</span>
+            )}
+            <h1 className="text-4xl font-bold text-white drop-shadow-lg">{shop.name}</h1>
           </div>
-          <p className="text-lg opacity-90">{shop.description}</p>
+          <p className="text-lg opacity-90 drop-shadow-md">{shop.description}</p>
         </div>
       </div>
 

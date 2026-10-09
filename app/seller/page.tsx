@@ -10,6 +10,9 @@ export default function SellerHomePage() {
   const { user } = useAuth();
   const router = useRouter();
   const [shopId, setShopId] = useState<string | null>(null);
+  const [shopName, setShopName] = useState<string>("");
+  const [shops, setShops] = useState<any[]>([]);
+  const [showShopSelector, setShowShopSelector] = useState(false);
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,
@@ -17,32 +20,45 @@ export default function SellerHomePage() {
     pendingOrders: 0
   });
 
-    useEffect(() => {
-    const savedShopId = localStorage.getItem("currentShopId");
-    if (savedShopId) {
-      setShopId(savedShopId);
-      fetchStats(savedShopId);
-    } else if (user) {
-      // Agar localStorage bo'sh bo'lsa, foydalanuvchining do'konini qidirish
-      findUserShop();
+  useEffect(() => {
+    if (user) {
+      loadShops();
     }
   }, [user]);
 
-  const findUserShop = async () => {
+  const loadShops = async () => {
     if (!user) return;
     
     const { data, error } = await supabase
       .from("shops")
       .select("id, name")
-      .eq("user_id", user.id)
-      .single();
+      .eq("user_id", user.id);
     
-    if (data && !error) {
-      localStorage.setItem("currentShopId", data.id);
-      localStorage.setItem("currentShopName", data.name);
-      setShopId(data.id);
-      fetchStats(data.id);
+    if (data && data.length > 0) {
+      setShops(data);
+      
+      // Avval localStorage'dan tekshirish
+      const savedShopId = localStorage.getItem("currentShopId");
+      const currentShop = data.find(s => s.id === savedShopId);
+      
+      if (currentShop) {
+        setShopId(currentShop.id);
+        setShopName(currentShop.name);
+        fetchStats(currentShop.id);
+      } else {
+        // Birinchi do'konni tanlash
+        selectShop(data[0]);
+      }
     }
+  };
+
+  const selectShop = (shop: any) => {
+    localStorage.setItem("currentShopId", shop.id);
+    localStorage.setItem("currentShopName", shop.name);
+    setShopId(shop.id);
+    setShopName(shop.name);
+    setShowShopSelector(false);
+    fetchStats(shop.id);
   };
 
   const fetchStats = async (shopId: string) => {
@@ -99,10 +115,68 @@ export default function SellerHomePage() {
             <Link href="/" className="text-blue-600 hover:underline font-medium">
               ← Bosh sahifaga
             </Link>
-            <span className="text-xl font-bold text-gray-800">Do'konim</span>
-            <div></div>
+            
+            {/* Do'kon nomi va almashtirish */}
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-500 hidden md:inline">Boshqarilayotgan do'kon:</span>
+              <button
+                onClick={() => shops.length > 1 && setShowShopSelector(true)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+                  shops.length > 1 
+                    ? "bg-blue-50 hover:bg-blue-100 cursor-pointer" 
+                    : "bg-blue-50 cursor-default"
+                }`}
+              >
+                <span className="text-sm text-gray-600">🏪</span>
+                <span className="font-bold text-blue-600">{shopName}</span>
+                {shops.length > 1 && (
+                  <span className="text-blue-600 text-xs">▼</span>
+                )}
+              </button>
+            </div>
           </div>
         </header>
+
+        {/* Do'kon tanlash modali */}
+        {showShopSelector && shops.length > 1 && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full">
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Do'konni tanlang</h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Qaysi do'konni boshqarmoqchisiz?
+              </p>
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {shops.map((shop) => (
+                  <button
+                    key={shop.id}
+                    onClick={() => selectShop(shop)}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition ${
+                      shop.id === shopId
+                        ? "bg-blue-100 border-2 border-blue-600"
+                        : "bg-gray-50 hover:bg-gray-100 border-2 border-transparent"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🏪</span>
+                      <div>
+                        <div className="font-medium text-gray-900">{shop.name}</div>
+                        {shop.id === shopId && (
+                          <div className="text-xs text-blue-600">✓ Hozirgi do'kon</div>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowShopSelector(false)}
+                className="mt-4 w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+              >
+                Bekor qilish
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="container mx-auto px-6 py-12">
           <div className="max-w-6xl mx-auto">
@@ -149,7 +223,7 @@ export default function SellerHomePage() {
 
               {/* Mahsulotlarim */}
               <Link href="/seller/products" className="bg-white rounded-2xl shadow-sm p-8 hover:shadow-lg transition text-center group">
-                <div className="text-6xl mb-4 group-hover:scale-110 transition"></div>
+                <div className="text-6xl mb-4 group-hover:scale-110 transition">📦</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Mahsulotlarim</h3>
                 <p className="text-gray-500 text-sm">Barcha mahsulotlaringizni ko'ring va boshqaring</p>
               </Link>
@@ -169,7 +243,7 @@ export default function SellerHomePage() {
               </Link>
 
               {/* Do'kon sozlamalari */}
-              <Link href="/seller/register" className="bg-white rounded-2xl shadow-sm p-8 hover:shadow-lg transition text-center group">
+              <Link href="/seller/settings" className="bg-white rounded-2xl shadow-sm p-8 hover:shadow-lg transition text-center group">
                 <div className="text-6xl mb-4 group-hover:scale-110 transition">⚙️</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Do'kon Sozlamalari</h3>
                 <p className="text-gray-500 text-sm">Do'kon ma'lumotlarini yangilang</p>

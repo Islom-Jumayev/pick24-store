@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../context/AuthContext";
 import ProtectedRoute from "../../ProtectedRoute";
+import ImageUpload from "../../../components/ImageUpload"; // ← YANGI QO'SHILDI
 
 export default function EditProductPage() {
   const { user } = useAuth();
@@ -49,6 +50,13 @@ export default function EditProductPage() {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     setLoading(true);
+
+    // Rasm yuklanganligini tekshirish
+    if (!image) {
+      alert("Iltimos, mahsulot rasmini yuklang!");
+      setLoading(false);
+      return;
+    }
 
     const priceNum = parseInt(price);
     const priceText = new Intl.NumberFormat("uz-UZ").format(priceNum) + " so'm";
@@ -122,20 +130,15 @@ export default function EditProductPage() {
                 />
               </div>
 
+              {/* Rasm Yuklash - O'ZGARTIRILDI */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Rasm URL manzili *
+                  Mahsulot rasmi *
                 </label>
-                <input
-                  type="url"
-                  required
+                <ImageUpload
                   value={image}
-                  onChange={(e) => setImage(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(url) => setImage(url)}
                 />
-                {image && (
-                  <img src={image} alt="Preview" className="mt-2 w-32 h-32 object-cover rounded-lg" />
-                )}
               </div>
 
               <div>

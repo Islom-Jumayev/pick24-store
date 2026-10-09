@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../../lib/supabase";
-import ProtectedRoute from "../ProtectedRoute"; // ← YANGI QO'SHILDI
+import ProtectedRoute from "../ProtectedRoute";
+import ImageUpload from "../../components/ImageUpload"; // ← YANGI QO'SHILDI
 
 export default function AddProductPage() {
   const router = useRouter();
@@ -30,11 +31,18 @@ export default function AddProductPage() {
     e.preventDefault();
     setLoading(true);
     
-    // Foydalanuvchini tekshirish ← YANGI QO'SHILDI
+    // Foydalanuvchini tekshirish
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       alert("Iltimos, avval tizimga kiring");
       router.push("/login");
+      return;
+    }
+    
+    // Rasm yuklanganligini tekshirish
+    if (!image) {
+      alert("Iltimos, mahsulot rasmini yuklang!");
+      setLoading(false);
       return;
     }
     
@@ -76,7 +84,7 @@ export default function AddProductPage() {
         </div>
       </header>
 
-      <ProtectedRoute shopRequired={true}> {/* ← YANGI QO'SHILDI */}
+      <ProtectedRoute shopRequired={true}>
         <div className="container mx-auto px-6 py-12">
           <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">
@@ -93,12 +101,10 @@ export default function AddProductPage() {
                   Qaysi do'konga qo'shasiz? *
                 </label>
                 {isShopLocked ? (
-                  // Do'kon ID saqlangan bo'lsa - o'qib bo'lmaydigan input
                   <div className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
                     {localStorage.getItem("currentShopName")} ({shopId})
                   </div>
                 ) : (
-                  // Do'kon ID saqlanmagan bo'lsa - oddiy select
                   <select
                     required
                     value={shopId}
@@ -144,22 +150,15 @@ export default function AddProductPage() {
                 />
               </div>
 
-              {/* Rasm Linki */}
+              {/* Rasm Yuklash - O'ZGARTIRILDI */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Rasm URL manzili *
+                  Mahsulot rasmi *
                 </label>
-                <input
-                  type="url"
-                  required
+                <ImageUpload
                   value={image}
-                  onChange={(e) => setImage(e.target.value)}
-                  placeholder="https://example.com/image.jpg"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(url) => setImage(url)}
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Internetdan rasmning to'g'ridan-to'g'ri havolasini (link) olib tashlang.
-                </p>
               </div>
 
               {/* Tavsif */}
@@ -200,7 +199,7 @@ export default function AddProductPage() {
             </form>
           </div>
         </div>
-      </ProtectedRoute> {/* ← YANGI QO'SHILDI */}
+      </ProtectedRoute>
     </main>
   );
 }
